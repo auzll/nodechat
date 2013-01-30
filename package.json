@@ -1,0 +1,10 @@
+{
+    "name": "nodechat"
+  , "version": "0.0.1"
+  , "private": true
+  , "dependencies": {
+      "ws": "latest",
+      "lang": "latest",
+      "webrtc.io": "latest"
+  }
+}

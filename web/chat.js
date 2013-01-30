@@ -7,19 +7,22 @@ $(document).ready(function() {
 	var onlineUserMap = new zTool.SimpleMap();
 	var currentUser = null;
 	var currentUserNick = null;
+	var uid = 1;
+	var connCounter = 1;
+	var flag = 0;
 
-	if (typeof WebSocket === 'undefined') {
+	if(typeof WebSocket === 'undefined') {
 		$("#prePage").hide();
 		$("#errorPage").show();
 	}
 
 	function updateOnlineUser() {
 		var html = ["<div>在线用户(" + onlineUserMap.size() + ")</div>"];
-		if (onlineUserMap.size() > 0) {
+		if(onlineUserMap.size() > 0) {
 			var users = onlineUserMap.values();
-			for ( var i in users) {
+			for(var i in users) {
 				html.push("<div>");
-				if (users[i].uid == currentUser.uid) {
+				if(users[i].uid == currentUser.uid) {
 					html.push("<b>" + formatUserString(users[i]) + "(我)</b>");
 				} else {
 					html.push(formatUserString(users[i]));
@@ -27,7 +30,7 @@ $(document).ready(function() {
 				html.push("</div>");
 			}
 		}
-		
+
 		$("#onlineUsers").html(html.join(''));
 	}
 
@@ -36,7 +39,7 @@ $(document).ready(function() {
 	}
 
 	function formatUserString(user) {
-		if (!user) {
+		if(!user) {
 			return '';
 		}
 		return user.nick + "<span class='gray'>(" + user.uid + ")</span> ";
@@ -51,28 +54,26 @@ $(document).ready(function() {
 	}
 
 	function reset() {
-		if (socket) {
+		if(socket) {
 			socket.close();
 		}
 		socket = null;
 		onlineUserMap = null;
-		currentUser = null;
 		$("#onlineUsers").html("");
 		$("#talkFrame").html("");
 		$("#nickInput").val("");
 	}
 
 	function close() {
-		
+
 	}
 
 	$("#open").click(function(event) {
 		currentUserNick = $.trim($("#nickInput").val());
-		if ('' == currentUserNick) {
+		if('' == currentUserNick) {
 			alert('请先输入昵称');
 			return;
 		}
-		
 		$("#prePage").hide();
 		$("#mainPage").show();
 		reset();
@@ -81,48 +82,61 @@ $(document).ready(function() {
 		onlineUserMap = new zTool.SimpleMap();
 		socket.onmessage = function(event) {
 			var mData = chatLib.analyzeMessageData(event.data);
-			
-			if (mData && mData.event) {
-				switch (mData.event) {
-				case EVENT_TYPE.LOGIN: // 新用户连接
-					var user = mData.values[0];
-					onlineUserMap.put(user.uid, user);
+
+			if(mData && mData.event) {
+				switch(mData.event) {
+				case EVENT_TYPE.LOGIN:
+					// 新用户连接
+					var newUser = mData.values[0];
+					if(flag == 0) {
+						currentUser = newUser;
+						flag = 1;
+					}
+					connCounter = mData.counter;
+					uid = connCounter;
+					onlineUserMap.put(uid, newUser);
 					updateOnlineUser();
-					appendMessage(formatUserTalkString(user) + "[进入房间]");
+					appendMessage(formatUserTalkString(newUser) + "[进入房间]");
 					break;
 
-				case EVENT_TYPE.LOGOUT: // 用户退出
+				case EVENT_TYPE.LOGOUT:
+					// 用户退出
 					var user = mData.values[0];
+					alert(user.uid);
 					onlineUserMap.remove(user.uid);
 					updateOnlineUser();
 					appendMessage(formatUserTalkString(user) + "[离开房间]");
 					break;
 
-				case EVENT_TYPE.SPEAK: // 用户发言
+				case EVENT_TYPE.SPEAK:
+					// 用户发言
 					var content = mData.values[0];
-					appendMessage(formatUserTalkString(mData.user));
-					appendMessage("<span>&nbsp;&nbsp;</span>" + content);
+					if(mData.user.uid != currentUser.uid) {
+						appendMessage(formatUserTalkString(mData.user));
+						appendMessage("<span>&nbsp;&nbsp;</span>" + content);
+					}
 					break;
 
-				case EVENT_TYPE.LIST_USER: // 获取当前在线用户
+				case EVENT_TYPE.LIST_USER:
+					// 获取当前在线用户
 					var users = mData.values;
-					if (users && users.length) {
-						for ( var i in users) {
-							onlineUserMap.put(users[i].uid, users[i]);
-							if (mData.user.uid == users[i].uid) {
-								currentUser = users[i];
-							}
+					if(users && users.length) {
+						for(var i in users) {
+							// alert(i + ' user : ' + users[i].uid);
+							// alert('uid: ' + currentUser.uid);
+							if(users[i].uid != currentUser.uid) onlineUserMap.put(users[i].uid, users[i]);
 						}
 					}
 					//alert('currentUser:' + currentUser);
 					updateOnlineUser();
 					break;
 
-				case EVENT_TYPE.LIST_HISTORY: // 获取历史消息
+				case EVENT_TYPE.LIST_HISTORY:
+					// 获取历史消息
 					//{'user':data.user,'content':content,'time':new Date().getTime()}
 					var data = mData.values;
-					if (data && data.length) {
-						for ( var i in data) {
+					if(data && data.length) {
+						for(var i in data) {
 							appendMessage(formatUserTalkHisString(data[i].user, data[i].time));
 							appendMessage("<span>&nbsp;&nbsp;</span>" + data[i].content);
 						}
@@ -130,7 +144,8 @@ $(document).ready(function() {
 					}
 					break;
 
-				case EVENT_TYPE.ERROR: // 出错了
+				case EVENT_TYPE.ERROR:
+					// 出错了
 					appendMessage("[系统繁忙...]");
 					break;
 
@@ -152,33 +167,35 @@ $(document).ready(function() {
 
 		socket.onopen = function(event) {
 			socket.send(JSON.stringify({
-				'EVENT' : EVENT_TYPE.LOGIN,
-				'values' : [currentUserNick]
+				'EVENT': EVENT_TYPE.LOGIN,
+				'values': [currentUserNick]
 			}));
 			socket.send(JSON.stringify({
-				'EVENT' : EVENT_TYPE.LIST_USER
+				'EVENT': EVENT_TYPE.LIST_USER,
+				'values': [currentUserNick]
 			}));
 			socket.send(JSON.stringify({
-				'EVENT' : EVENT_TYPE.LIST_HISTORY
+				'EVENT': EVENT_TYPE.LIST_HISTORY,
+				'values': [currentUserNick]
 			}));
 		};
 	});
 
 	$("#message").keyup(function(event) {
-		if (13 == event.keyCode) {
+		if(13 == event.keyCode) {
 			sendMsg();
 		}
 	});
 
 	function sendMsg() {
 		var value = $.trim($("#message").val());
-		if (value) {
+		if(value) {
 			$("#message").val('');
 			appendMessage(formatUserTalkString(currentUser));
 			appendMessage("<span>&nbsp;&nbsp;</span>" + value);
 			socket.send(JSON.stringify({
-				'EVENT' : EVENT_TYPE.SPEAK,
-				'values' : [value]
+				'EVENT': EVENT_TYPE.SPEAK,
+				'values': [currentUser.uid, value]
 			}));
 		}
 	};
@@ -186,6 +203,9 @@ $(document).ready(function() {
 	$("#send").click(function(event) {
 		sendMsg();
 	});
+	$("#createroom").click(function(event)) {
+
+	}
 
 	function show(value) {
 		$("#response").html(value);

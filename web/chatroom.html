@@ -1,0 +1,114 @@
+<!doctype html>
+<html>
+  <head>
+    <title>websocket and node.js</title>
+    <meta charset="utf-8" />
+    <script src="jquery.js"></script>
+	<script src="..\svr\zTool.js"></script>
+	<script src="..\svr\chatLib.js"></script>
+	<script src="webrtc.io.js"></script>
+	<script src="DateUtil.js"></script>
+    <script src="chat.js"></script>
+
+	<style>
+	body{color:#000;background-color: #22252A;overflow:auto;margin:0;padding:0;}body{font-size:12px;}body,input,select,button,textarea{font-family:verdana,sans-serif;}h1,h2,h3,h4,h5,h6,select,input,textarea,button,table{font-size:100%;}h1,h2,h3,h4,h5,h6,ul,ol,li,form,p,dl,dt,dd,table,th,td,img,blockquote{margin:0;padding:0;border:0;}input,button,textarea,img{line-height:normal;outline:0;}abbr,acronym,address,cite,q,em,code,var,dfn,ins{font-style:normal;text-decoration:none;border:0;}q:before,q:after{content:"";}ul,ol{list-style:none;}table{border-collapse:collapse;border-spacing:0;}select,input,button,button img,textarea,label,img{margin:0;vertical-align:middle;}
+
+	.gray {
+	color:gray;
+	}
+	.textIndent {
+	text-indent:2em;
+	}
+	.talkLeft, .talkRight{
+	float:left;
+	height: 480px;
+	padding:10px 10px;
+	}
+	.talkLeft {
+	width:625px;
+	}
+	#talkFrame {
+	height: 360px;
+	padding: 5px 5px;
+
+	margin-bottom:10px;
+	overflow-y:scroll;
+	overflow-x: none; 
+	}
+	#inputDiv {
+	margin-bottom:5px;
+	}
+	#message {
+	width: 623px;
+	height: 60px;
+	border:0px;
+	}
+	.page{
+	overflow:hidden;
+	width:890px;
+	margin: 0 auto;
+	background: #FFFFFF;
+	font-size:12px;
+	padding: 10px 10px;
+	margin-top:50px;
+	}
+	.f-right{
+	float:right;
+	}
+	.f-left{
+	float:left;
+	}
+	#onlineUsers {
+
+	width: 225px; height: 480px;
+	overflow-y:scroll;
+	overflow-x: none; 
+	}
+	.page, #talkFrame, #onlineUsers,#message {
+	border-radius: 10px 10px 10px 10px;
+	-moz-box-shadow:1px 1px 10px #333333;
+	-webkit-box-shadow:1px 1px 10px #333333;
+	box-shadow:1px 1px 10px #333333;
+	}
+	#send {
+	width: 100px; height: 30px; margin-top: 5px;
+	font-size:14px;
+	}
+	#createroom {
+	width: 100px; height: 30px; margin-top: 5px;
+	font-size:14px;
+	}
+	</style>
+  </head>
+  <body>
+	<div id='errorPage' class='page' style='display:none;'>
+		<h1>
+		当前浏览器不支持WebSocket，请使用chrome or opera or firefox 18
+		</h1>
+	</div>
+	<div id='prePage' class='page' style='width:690px;text-align:center;'>
+		<input id='nickInput' type='text' placeholder="请输入您的昵称"  />&nbsp;
+		<input id='open' type='button' value='进入聊天室'  />
+	</div>
+	<div id='mainPage' class='page' style='display:none;'>
+		<div style='overflow:hidden;'>
+			<div class='talkLeft'>
+				<div id='talkFrame'></div>
+				<div id='inputDiv'>
+					<textarea placeholder="嗨，随便说点啥呗" id="message"></textarea>
+				</div>
+				<div style='overflow:hidden;'>
+					<input class='f-left' type='button' value='创建聊天室' id="createroom" />
+					<input class='f-right' type='button' value='发送' id="send" />
+				</div>
+			</div>
+			<div class='talkRight'>
+				<div id='onlineUsers'></div>
+			</div>
+		</div>
+		<div style='text-align:center;'>
+			<a style='color:blue;' target='_blank' href='https://github.com/zsj2145676'>获取源码</a>
+		</div>
+	</div>
+  </body>
+</html>
